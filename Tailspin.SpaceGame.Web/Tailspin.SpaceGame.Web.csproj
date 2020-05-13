@@ -1,3 +1,4 @@
+
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
@@ -35,3 +36,4 @@
     </EmbeddedResource>
   </ItemGroup>
 </Project>
+
