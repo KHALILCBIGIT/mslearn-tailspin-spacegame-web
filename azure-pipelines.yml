@@ -1,4 +1,4 @@
-  trigger:
+trigger:
   - '*'
   
   pool:
@@ -17,13 +17,11 @@
     inputs:
       version: '$(dotnetSdkVersion)'
   
-
   - task: UseDotNet@2
     displayName: 'Use .NET Core SDK 2.1.505 for SonarCloud'
     inputs:
       version: '2.1.505'
   
-
   - task: Npm@1
     displayName: 'Run npm install'
     inputs:
@@ -50,15 +48,20 @@
     inputs:
       SonarCloud: 'sonarcloud-service-connexion'
       organization: '$(SonarOrganization)'
-      scannerMode: 'MSBuild'
       projectKey: '$(SonarProjectKey)'
       projectName: '$(SonarProjectName)'
       projectVersion: '$(Build.BuildNumber)'
       extraProperties: |
        sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/Coverage/coverage.opencover.xml
        sonar.exclusions=**/wwwroot/lib/**/*
+    condition: |
+      and
+      (
+        succeeded(),
+        eq(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['System.PullRequest.TargetBranch'], 'master')
+      )
   
-
   - task: DotNetCoreCLI@2
     displayName: 'Build the project - $(buildConfiguration)'
     inputs:
@@ -67,7 +70,6 @@
       projects: '**/*.csproj'
   
   - task: DotNetCoreCLI@2
-
     displayName: 'Install ReportGenerator'
     inputs:
       command: custom
@@ -88,9 +90,23 @@
   
   - task: SonarCloudAnalyze@1
     displayName: 'Run SonarCloud code analysis'
-  
+    condition: |
+      and
+      (
+        succeeded(),
+        eq(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['System.PullRequest.TargetBranch'], 'master')
+      )
+   
   - task: SonarCloudPublish@1
     displayName: 'Publish SonarCloud quality gate results'
+    condition: |
+      and
+      (
+        succeeded(),
+        eq(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['System.PullRequest.TargetBranch'], 'master')
+      )
   
   - task: PublishCodeCoverageResults@1
     displayName: 'Publish code coverage report'
@@ -98,7 +114,6 @@
       codeCoverageTool: 'cobertura'
       summaryFileLocation: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
   
-
   - task: DotNetCoreCLI@2
     displayName: 'Publish the project - $(buildConfiguration)'
     inputs:
